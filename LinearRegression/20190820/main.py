@@ -5,6 +5,7 @@
 # 这个dataset 是房价相关的
 
 import os
+import sys
 import math
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -12,11 +13,10 @@ from numpy import *
 
 df = pd.read_csv("input/kc_house_data.csv", )
 
-# print(df[:1])
+print(df.shape)
 
 #因是简单的一个线性回归 参数先使用2个 price 和 sqft_living
 df = df[['price', 'sqft_living']]
-
 
 #1.绘制价格和房间规格大小的点图
 
@@ -29,13 +29,16 @@ for a in alt:
     y.append(a[0])
 x, y = array(x),array(y)
 
-# plt.figure()
+plt.figure()
 
-# plt.scatter(x, y, s=5, c='red', label = 'Predicted Regression Line')
+plt.scatter(x, y, s=5, c='red', label = 'Predicted Regression Line')
 
-# plt.xlabel('Living Space (sqft)')
-# plt.ylabel('Price ($)')
-# plt.show()
+plt.xlabel('Living Space (sqft)')
+plt.ylabel('Price ($)')
+plt.show()
+
+sys.exit()
+
 
 # 定义预测函数 h = z + z1 * x 预测为线性
 # 定义学习率 a
