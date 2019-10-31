@@ -1,6 +1,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt  # 绘图库
 
+import numpy.matlib 
+import numpy as np
+
+import os
+
 # data from https://www.kaggle.com/uciml/mushroom-classification
 df = pd.read_csv("./input/mushrooms.csv")
 
@@ -44,19 +49,84 @@ df['cap-shape'] = df['cap-shape'].map(cap_shape_mapping)
 df['cap-color'] = df['cap-color'].map(cap_color_mapping)
 # print(df.head())
 #获取类别 进行画图
-df_p = df[df['class'].isin([1])].drop_duplicates()
-x_p_s = df_p[['cap-shape']]
-x_p_c = df_p[['cap-color']]
-df_e = df[df['class'].isin([0])].drop_duplicates()
-x_e_s = df_e[['cap-shape']]
-x_e_c = df_e[['cap-color']]
+# df_p = df[df['class'].isin([1])].drop_duplicates()
+# x_p_s = df_p[['cap-shape']]
+# x_p_c = df_p[['cap-color']]
+# df_e = df[df['class'].isin([0])].drop_duplicates()
+# x_e_s = df_e[['cap-shape']]
+# x_e_c = df_e[['cap-color']]
 
 # df = df.drop_duplicates()
 # print(df)
 
 #绘制 x1 = shape x2 = color 二元分类图
-plt.scatter(x_e_s, x_e_c, c= 'green', alpha = 0.5) #可使用的蘑菇位置
-plt.scatter(x_p_s, x_p_c, c= 'blue', alpha = 0.1) #有毒的蘑菇位置
+# plt.scatter(x_e_s, x_e_c, c= 'green', alpha = 0.5) #可使用的蘑菇位置
+# plt.scatter(x_p_s, x_p_c, c= 'blue', alpha = 0.1) #有毒的蘑菇位置
 
-plt.show()
+# plt.show()
 # theta = theta - a * (y - 1 / (1 + e^(theta_T X))) * x(i)
+
+x = df[['cap-shape', 'cap-color']]
+# x2 = df[['cap-shape']] * df[['cap-shape']]
+# x3 = df[['cap-color']] * df[['cap-color']]
+y = df[['class']]
+m = len(x)
+a = 0.01 #学习率
+x = np.asmatrix(x)
+y = np.asmatrix(y)
+thea = np.matlib.zeros((3, 1))
+x0 = np.matlib.ones((m, 1))
+x = np.concatenate([x0, x], 1)
+cost = []
+thea_total = []
+# print(y[0])
+# os._exit(0)
+def g(thea_x):
+    	return 1./ (1 + np.exp(-thea_x))
+
+def cost_func(thea, x, y, m, diff):
+        # -ylog(y)-(1-y)log(1-y)
+        h = diff
+        sum = np.dot(np.transpose(y), np.log(h)) * (-1)
+        sum = sum - np.dot(1 - np.transpose(y),np.log(1 - h))
+        sum = 1. / m * sum
+        return (sum.tolist())[0][0]
+# def h(thea, x):
+#         return 0
+# diff = y - np.dot(x, thea)
+diff = np.dot(x, thea)
+diff = g(diff) - y
+diff = np.dot(np.transpose(x), diff) * (1./m)
+loop_time = 0
+diff_arr = []
+while not np.all(np.absolute(diff) <= 1e-5) and loop_time < 1000:
+        # loop
+        thea = thea - a * diff
+        diff = np.dot(x, thea)
+        diff = g(diff)
+        cost.append(cost_func(thea, x, y, m, diff))
+        diff = diff - y
+        diff = np.dot(np.transpose(x), diff) * (1./m)
+        # loop_time = loop_time + 1
+       
+        thea_total.append(thea)
+        # loop_time = loop_time + 1
+        print('thea: ', thea)
+print('final thea', thea)
+new_theta_1 = []
+new_theta_2 = []
+new_theta_3 = []
+for i in thea_total:
+    b = i.tolist()
+    new_theta_1.append(b[0][0])
+    new_theta_2.append(b[1][0])
+    new_theta_3.append(b[2][0])
+    # c = cost_func(i, x, y, m)
+    # print(c)
+    # cost.append(c)
+plt.plot(new_theta_1, cost)
+plt.plot(new_theta_2, cost)
+plt.plot(new_theta_3, cost)
+plt.xlabel('thea值')
+plt.ylabel('代价函数值cost')
+plt.show()
