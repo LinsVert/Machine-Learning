@@ -16,28 +16,49 @@ class_type = df[['class']]
 #class : edible=e, poisonous=p
 # cap-shape : bell=b,conical=c,convex=x,flat=f, knobbed=k,sunken=s
 # cap-color: brown=n,buff=b,cinnamon=c,gray=g,green=r,pink=p,purple=u,red=e,white=w,yellow=y
-df = df[['class', 'cap-shape', 'cap-color']];
-
+df = df[['class', 'cap-shape', 'cap-color', 'bruises', 'odor', 'cap-surface']];
+thea_num = 6
 # type to int 
 cap_shape_mapping = {
-    'b' : 1,
-    'c' : 2,
-    'x' : 3,
-    'f' : 4,
-    'k' : 5,
-    's' : 6
+    'b' : 0.5,
+    'c' : 1.0,
+    'x' : 1.5,
+    'f' : 2.0,
+    'k' : 2.5,
+    's' : 3.0
 }
 cap_color_mapping = {
-    'n' : 1,
-    'b' : 2,
-    'c' : 3,
-    'g' : 4,
-    'r' : 5,
-    'p' : 6,
-    'u' : 7,
-    'e' : 8,
-    'w' : 9,
-    'y' : 10 
+    'n' : 0.5,
+    'b' : 1.0,
+    'c' : 1.5,
+    'g' : 2.0,
+    'r' : 2.5,
+    'p' : 3.0,
+    'u' : 3.5,
+    'e' : 4.0,
+    'w' : 4.5,
+    'y' : 5.0 
+}
+bruises_mapping = {
+    'f' : 1.0,
+    't' : 2.0
+}
+odor_mapping = {
+    'a' : 0.5,
+    'l' : 1.0,
+    'c' : 1.5,
+    'y' : 2.0,
+    'f' : 2.5,
+    'm' : 3.0,
+    'n' : 3.5,
+    'p' : 4.0,
+    's' : 4.5,
+}
+cap_surface_mapping = {
+    'f' : 0.5,
+    'g' : 1.0,
+    'y' : 1.5,
+    's' : 2.0
 }
 class_mapping = {
     'e' : 0,
@@ -46,7 +67,11 @@ class_mapping = {
 # 重新赋值 将字符变量变成数值变量
 df['class'] = df['class'].map(class_mapping)
 df['cap-shape'] = df['cap-shape'].map(cap_shape_mapping)
+df['bruises'] = df['bruises'].map(bruises_mapping)
 df['cap-color'] = df['cap-color'].map(cap_color_mapping)
+df['odor'] = df['odor'].map(odor_mapping)
+df['cap-surface'] = df['cap-surface'].map(cap_surface_mapping)
+x = df[['cap-shape', 'cap-color', 'bruises', 'odor', 'cap-surface']]
 # print(df.head())
 #获取类别 进行画图
 # df_p = df[df['class'].isin([1])].drop_duplicates()
@@ -66,7 +91,6 @@ df['cap-color'] = df['cap-color'].map(cap_color_mapping)
 # plt.show()
 # theta = theta - a * (y - 1 / (1 + e^(theta_T X))) * x(i)
 
-x = df[['cap-shape', 'cap-color']]
 # x2 = df[['cap-shape']] * df[['cap-shape']]
 # x3 = df[['cap-color']] * df[['cap-color']]
 y = df[['class']]
@@ -74,7 +98,7 @@ m = len(x)
 a = 0.01 #学习率
 x = np.asmatrix(x)
 y = np.asmatrix(y)
-thea = np.matlib.zeros((3, 1))
+thea = np.matlib.zeros((thea_num, 1))
 x0 = np.matlib.ones((m, 1))
 x = np.concatenate([x0, x], 1)
 cost = []
@@ -90,6 +114,7 @@ def cost_func(thea, x, y, m, diff):
         sum = np.dot(np.transpose(y), np.log(h)) * (-1)
         sum = sum - np.dot(1 - np.transpose(y),np.log(1 - h))
         sum = 1. / m * sum
+        sum = sum * (-1)
         return (sum.tolist())[0][0]
 # def h(thea, x):
 #         return 0
@@ -99,7 +124,7 @@ diff = g(diff) - y
 diff = np.dot(np.transpose(x), diff) * (1./m)
 loop_time = 0
 diff_arr = []
-while not np.all(np.absolute(diff) <= 1e-5) and loop_time < 1000:
+while not np.all(np.absolute(diff) <= 1e-5) and loop_time < 20:
         # loop
         thea = thea - a * diff
         diff = np.dot(x, thea)
@@ -113,20 +138,54 @@ while not np.all(np.absolute(diff) <= 1e-5) and loop_time < 1000:
         # loop_time = loop_time + 1
         print('thea: ', thea)
 print('final thea', thea)
-new_theta_1 = []
-new_theta_2 = []
-new_theta_3 = []
+new_theta = {}
+for j in range(thea_num):
+    key = 'thea_' + str(j)
+    new_theta[key] = []
 for i in thea_total:
     b = i.tolist()
-    new_theta_1.append(b[0][0])
-    new_theta_2.append(b[1][0])
-    new_theta_3.append(b[2][0])
+    for j in range(thea_num):
+        key = 'thea_' + str(j)
+        new_theta[key].append(b[j][0])
     # c = cost_func(i, x, y, m)
     # print(c)
     # cost.append(c)
-plt.plot(new_theta_1, cost)
-plt.plot(new_theta_2, cost)
-plt.plot(new_theta_3, cost)
+#画出代价函数
+plt.figure()
+for i in range(thea_num):
+    strs = "theta " + str(i + 1)
+    key = 'thea_' + str(i)
+    plt.plot(new_theta[key], cost, label=strs)
 plt.xlabel('thea值')
 plt.ylabel('代价函数值cost')
+#画出预测函数
+plt.figure()
+z = np.dot(x, thea)
+h = g(z)
+z = z.tolist()
+h = h.tolist()
+y = y.tolist()
+new_h = []
+new_z = []
+new_y = []
+error_num = 0
+right_num = 0
+for i in range(m):
+    c = 'r'
+    if y[i][0] is 0:
+        c = 'g'
+    if h[i][0] < 0.5 and y[i][0] is 0:
+        right_num = right_num + 1
+    elif h[i][0] >= 0.5 and y[i][0] is 1:  
+        right_num = right_num + 1
+    else :
+        error_num = error_num + 1
+    new_h.append(h[i][0])
+    new_z.append(z[i][0])
+    new_y.append(c)
+print('right num:', right_num)
+print('right rate :%s' %str(right_num / m * 100))
+print('error rate :', error_num)
+print('error num :%s' %str(error_num / m * 100))
+plt.scatter(new_z, new_h, c = new_y)
 plt.show()
